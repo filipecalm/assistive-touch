@@ -1,28 +1,47 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native'
+import {
+    View,
+    Text,
+    Image,
+    StyleSheet,
+    TouchableOpacity,
+} from 'react-native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { lightColors, darkColors } from '../constants/colors'
-import { VolumeManager } from 'react-native-volume-manager'
+import {
+    VolumeManager,
+    useRingerMode,
+    RINGER_MODE,
+    RingerModeType,
+} from 'react-native-volume-manager'
 import lightOff from '../assets/images/eco-light-off.png'
 import lightOn from '../assets/images/eco-light.png'
-import { Feather } from '@expo/vector-icons'
+import { Feather, Ionicons } from '@expo/vector-icons'
 
 export default function Home() {
     const [hasPermission, setHasPermission] = useState(false)
     const [isTorchOn, setIsTorchOn] = useState(false)
     const [isDarkMode, setIsDarkMode] = useState(false)
     const [volumes, setVolumes] = useState({
-        system: 0.5,
         music: 0.5,
         ring: 0.5,
         alarm: 0.5,
         notification: 0.5,
+        system: 0.5,
         call: 0.5,
     })
     const cameraRef = useRef(null)
     const [permission, requestPermission] = useCameraPermissions()
 
     const themeColors = isDarkMode ? darkColors : lightColors
+
+    const { mode, error, setMode } = useRingerMode()
+
+    const modeText = {
+        [RINGER_MODE.silent]: 'Silent',
+        [RINGER_MODE.normal]: 'Normal',
+        [RINGER_MODE.vibrate]: 'Vibrate',
+    }
 
     useEffect(() => {
         if (!permission) return
@@ -40,11 +59,11 @@ export default function Home() {
                 const volumeData = await VolumeManager.getVolume()
                 setVolumes(prev => ({
                     ...prev,
-                    system: volumeData.system ?? prev.system,
                     music: volumeData.volume ?? prev.music,
                     ring: volumeData.ring ?? prev.ring,
                     alarm: volumeData.alarm ?? prev.alarm,
                     notification: volumeData.notification ?? prev.notification,
+                    system: volumeData.system ?? prev.system,
                     call: prev.call,
                 }))
             } catch (error) {
@@ -55,11 +74,11 @@ export default function Home() {
         const volumeListener = VolumeManager.addVolumeListener((result) => {
             setVolumes(prev => ({
                 ...prev,
-                system: result.system ?? prev.system,
                 music: result.volume ?? prev.music,
                 ring: result.ring ?? prev.ring,
                 alarm: result.alarm ?? prev.alarm,
                 notification: result.notification ?? prev.notification,
+                system: result.system ?? prev.system,
                 call: prev.call,
             }))
         })
@@ -71,23 +90,46 @@ export default function Home() {
         }
     }, [permission, requestPermission])
 
+    // Função auxiliar para atualizar todos os volumes
+    const updateAllVolumes = async (newVolume) => {
+        await Promise.all(Object.keys(volumes).map((key) => VolumeManager.setVolume(newVolume, key)))
+        setVolumes({
+            music: newVolume,
+            ring: newVolume,
+            alarm: newVolume,
+            notification: newVolume,
+            system: newVolume,
+            call: newVolume,
+        })
+    }
+
+    const increaseVolume = async (type) => {
+        if (type === 'system') {
+            const newVolume = Math.min(volumes.system + 0.1, 1.0)
+            await updateAllVolumes(newVolume)
+        } else {
+            const newVolume = Math.min(volumes[type] + 0.1, 1.0)
+            await VolumeManager.setVolume(newVolume, type)
+            setVolumes(prev => ({ ...prev, [type]: newVolume }))
+        }
+    }
+
+    const decreaseVolume = async (type) => {
+        if (type === 'system') {
+            const newVolume = Math.max(volumes.system - 0.1, 0.0)
+            await updateAllVolumes(newVolume)
+        } else {
+            const newVolume = Math.max(volumes[type] - 0.1, 0.0)
+            await VolumeManager.setVolume(newVolume, type)
+            setVolumes(prev => ({ ...prev, [type]: newVolume }))
+        }
+    }
+
     const toggleTorch = () => {
         if (cameraRef.current) {
             setIsTorchOn(prev => !prev)
             setIsDarkMode(prev => !prev)
         }
-    }
-
-    const increaseVolume = async (type) => {
-        const newVolume = Math.min(volumes[type] + 0.1, 1.0)
-        await VolumeManager.setVolume(newVolume, type)
-        setVolumes(prev => ({ ...prev, [type]: newVolume }))
-    }
-
-    const decreaseVolume = async (type) => {
-        const newVolume = Math.max(volumes[type] - 0.1, 0.0)
-        await VolumeManager.setVolume(newVolume, type)
-        setVolumes(prev => ({ ...prev, [type]: newVolume }))
     }
 
     if (hasPermission === null) {
@@ -104,7 +146,7 @@ export default function Home() {
             </View>
         )
     }
-
+    console.log('mode -->', mode)
     return (
         <View style={[styles.container, { backgroundColor: themeColors.background }]}>
             <CameraView
@@ -145,6 +187,26 @@ export default function Home() {
                         </View>
                     </View>
                 ))}
+            </View>
+            <View>
+                <Text>Ringer Mode: {mode !== undefined ? modeText[mode] : null}</Text>
+
+                <View style={{ flexDirection: 'row' }}>
+                    {/* Modo Normal */}
+                    <TouchableOpacity onPress={() => setMode(RINGER_MODE.normal)} style={styles.iconButton}>
+                        <Ionicons name="volume-high" size={40} color={mode === RINGER_MODE.normal ? 'green' : 'black'} />
+                    </TouchableOpacity>
+
+                    {/* Modo Vibrar */}
+                    <TouchableOpacity onPress={() => setMode(RINGER_MODE.vibrate)} style={styles.iconButton}>
+                        <Ionicons name="volume-mute-outline" size={40} color={mode === RINGER_MODE.vibrate ? 'blue' : 'black'} />
+                    </TouchableOpacity>
+
+                </View>
+
+                <View>
+                    <Text>{error?.message}</Text>
+                </View>
             </View>
         </View>
     )
@@ -202,5 +264,8 @@ const styles = StyleSheet.create({
         textAlignVertical: 'center',
         textAlign: 'center',
         width: '45%',
+    },
+    iconButton: {
+        padding: 10,
     },
 })

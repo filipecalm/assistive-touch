@@ -16,6 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "permissions": ["ACCESS_NOTIFICATION_POLICY"],
       "package": "com.filipecalm.assistivetouch"
     },
     "web": {
