@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
+import { lightColors, darkColors } from '../constants/colors'
 import { VolumeManager } from 'react-native-volume-manager'
 import lightOff from '../assets/images/eco-light-off.png'
 import lightOn from '../assets/images/eco-light.png'
-import { lightColors, darkColors } from '../constants/colors'
 import { Feather } from '@expo/vector-icons'
 
 export default function Home() {
@@ -12,11 +12,11 @@ export default function Home() {
     const [isTorchOn, setIsTorchOn] = useState(false)
     const [isDarkMode, setIsDarkMode] = useState(false)
     const [volumes, setVolumes] = useState({
+        system: 0.5,
         music: 0.5,
         ring: 0.5,
         alarm: 0.5,
         notification: 0.5,
-        system: 0.5,
         call: 0.5,
     })
     const cameraRef = useRef(null)
@@ -40,17 +40,35 @@ export default function Home() {
                 const volumeData = await VolumeManager.getVolume()
                 setVolumes(prev => ({
                     ...prev,
-                    music: volumeData.music ?? prev.music,
+                    system: volumeData.system ?? prev.system,
+                    music: volumeData.volume ?? prev.music,
                     ring: volumeData.ring ?? prev.ring,
                     alarm: volumeData.alarm ?? prev.alarm,
                     notification: volumeData.notification ?? prev.notification,
-                    system: volumeData.system ?? prev.system,
-                    call: volumeData.call ?? prev.call,
+                    call: prev.call,
                 }))
             } catch (error) {
                 console.error('Erro ao obter volumes:', error)
             }
         })()
+
+        const volumeListener = VolumeManager.addVolumeListener((result) => {
+            setVolumes(prev => ({
+                ...prev,
+                system: result.system ?? prev.system,
+                music: result.volume ?? prev.music,
+                ring: result.ring ?? prev.ring,
+                alarm: result.alarm ?? prev.alarm,
+                notification: result.notification ?? prev.notification,
+                call: prev.call,
+            }))
+        })
+
+        return () => {
+            if (volumeListener && typeof volumeListener.remove === 'function') {
+                volumeListener.remove()
+            }
+        }
     }, [permission, requestPermission])
 
     const toggleTorch = () => {
@@ -169,7 +187,7 @@ const styles = StyleSheet.create({
     volumeControls: {
         flexDirection: 'row',
         alignItems: 'center',
-        width: '45%'
+        width: '45%',
     },
     volumeButton: {
         padding: 10,
@@ -183,6 +201,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         textAlignVertical: 'center',
         textAlign: 'center',
-        width: '45%'
+        width: '45%',
     },
 })
