@@ -11,11 +11,17 @@ export default function Home() {
     const [hasPermission, setHasPermission] = useState(false)
     const [isTorchOn, setIsTorchOn] = useState(false)
     const [isDarkMode, setIsDarkMode] = useState(false)
-    const [volume, setVolume] = useState(0.5) // Valor padrão inicial
+    const [volumes, setVolumes] = useState({
+        music: 0.5,
+        ring: 0.5,
+        alarm: 0.5,
+        notification: 0.5,
+        system: 0.5,
+        call: 0.5,
+    })
     const cameraRef = useRef(null)
     const [permission, requestPermission] = useCameraPermissions()
 
-    // Selecionar as cores com base no modo
     const themeColors = isDarkMode ? darkColors : lightColors
 
     useEffect(() => {
@@ -31,38 +37,39 @@ export default function Home() {
 
         (async () => {
             try {
-                const currentVolume = await VolumeManager.getVolume()
-                // Verifica se o valor é um número válido entre 0 e 1
-                if (typeof currentVolume === 'number' && !isNaN(currentVolume) && currentVolume >= 0 && currentVolume <= 1) {
-                    setVolume(currentVolume)
-                } else {
-                    console.warn('Volume retornado inválido, usando valor padrão 0.5:', currentVolume)
-                    setVolume(0.5) // Define valor padrão se inválido
-                }
+                const volumeData = await VolumeManager.getVolume()
+                setVolumes(prev => ({
+                    ...prev,
+                    music: volumeData.music ?? prev.music,
+                    ring: volumeData.ring ?? prev.ring,
+                    alarm: volumeData.alarm ?? prev.alarm,
+                    notification: volumeData.notification ?? prev.notification,
+                    system: volumeData.system ?? prev.system,
+                    call: volumeData.call ?? prev.call,
+                }))
             } catch (error) {
-                console.error('Erro ao obter volume:', error)
-                setVolume(0.5) // Valor padrão em caso de erro
+                console.error('Erro ao obter volumes:', error)
             }
         })()
     }, [permission, requestPermission])
 
     const toggleTorch = () => {
         if (cameraRef.current) {
-            setIsTorchOn(prev => !prev)    // Alterna a lanterna
-            setIsDarkMode(prev => !prev)   // Alterna o modo claro/escuro
+            setIsTorchOn(prev => !prev)
+            setIsDarkMode(prev => !prev)
         }
     }
 
-    const increaseVolume = async () => {
-        const newVolume = Math.min(volume + 0.1, 1.0)
-        await VolumeManager.setVolume(newVolume)
-        setVolume(newVolume)
+    const increaseVolume = async (type) => {
+        const newVolume = Math.min(volumes[type] + 0.1, 1.0)
+        await VolumeManager.setVolume(newVolume, type)
+        setVolumes(prev => ({ ...prev, [type]: newVolume }))
     }
 
-    const decreaseVolume = async () => {
-        const newVolume = Math.max(volume - 0.1, 0.0)
-        await VolumeManager.setVolume(newVolume)
-        setVolume(newVolume)
+    const decreaseVolume = async (type) => {
+        const newVolume = Math.max(volumes[type] - 0.1, 0.0)
+        await VolumeManager.setVolume(newVolume, type)
+        setVolumes(prev => ({ ...prev, [type]: newVolume }))
     }
 
     if (hasPermission === null) {
@@ -92,24 +99,34 @@ export default function Home() {
                 <Image style={styles.buttonImage} source={isTorchOn ? lightOn : lightOff} />
             </TouchableOpacity>
 
-            <View style={styles.volumeControls}>
-                <TouchableOpacity
-                    style={[styles.volumeButton, { backgroundColor: themeColors.primary }]}
-                    onPress={decreaseVolume}
-                >
-                    <Feather name="minus-circle" size={22} color={themeColors.text} />
-                </TouchableOpacity>
-                <Text
-                    style={[styles.volumeDisplay, { color: themeColors.text, borderColor: themeColors.primary }]}
-                >
-                    Volume: {isNaN(volume) ? '0' : (volume * 100).toFixed(0)}%
-                </Text>
-                <TouchableOpacity
-                    style={[styles.volumeButton, { backgroundColor: themeColors.primary }]}
-                    onPress={increaseVolume}
-                >
-                    <Feather name="plus-circle" size={22} color={themeColors.text} />
-                </TouchableOpacity>
+            {/* Controles de volume */}
+            <View style={styles.volumeContainer}>
+                {Object.entries(volumes).map(([type, value]) => (
+                    <View key={type} style={styles.volumeRow}>
+                        <Text style={[styles.volumeLabel, { color: themeColors.text }]}>
+                            {type.charAt(0).toUpperCase() + type.slice(1)}:
+                        </Text>
+                        <View style={styles.volumeControls}>
+                            <TouchableOpacity
+                                style={[styles.volumeButton, { backgroundColor: themeColors.primary }]}
+                                onPress={() => decreaseVolume(type)}
+                            >
+                                <Feather name="minus-circle" size={22} color={themeColors.text} />
+                            </TouchableOpacity>
+                            <Text
+                                style={[styles.volumeDisplay, { color: themeColors.text, borderColor: themeColors.primary }]}
+                            >
+                                {(value * 100).toFixed(0)}%
+                            </Text>
+                            <TouchableOpacity
+                                style={[styles.volumeButton, { backgroundColor: themeColors.primary }]}
+                                onPress={() => increaseVolume(type)}
+                            >
+                                <Feather name="plus-circle" size={22} color={themeColors.text} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                ))}
             </View>
         </View>
     )
@@ -132,15 +149,31 @@ const styles = StyleSheet.create({
         height: 80,
         resizeMode: 'cover',
     },
+    volumeContainer: {
+        width: '100%',
+        alignItems: 'flex-start',
+        paddingHorizontal: 20,
+        marginTop: 20,
+    },
+    volumeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        marginVertical: 10,
+    },
+    volumeLabel: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
     volumeControls: {
         flexDirection: 'row',
-        marginTop: 20,
         alignItems: 'center',
+        width: '45%'
     },
     volumeButton: {
-        padding: 14,
+        padding: 10,
         borderRadius: 5,
-        marginVertical: 5,
     },
     volumeDisplay: {
         height: 50,
@@ -149,5 +182,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         paddingHorizontal: 10,
         textAlignVertical: 'center',
+        textAlign: 'center',
+        width: '45%'
     },
 })
