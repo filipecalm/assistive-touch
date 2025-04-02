@@ -3,6 +3,7 @@ import {
     View,
     Text,
     Image,
+    Button,
     StyleSheet,
     TouchableOpacity,
 } from 'react-native'
@@ -12,13 +13,45 @@ import {
     VolumeManager,
     useRingerMode,
     RINGER_MODE,
-    RingerModeType,
 } from 'react-native-volume-manager'
 import lightOff from '../assets/images/eco-light-off.png'
 import lightOn from '../assets/images/eco-light.png'
 import { Feather, Ionicons } from '@expo/vector-icons'
+import CountryFlag from "react-native-country-flag"
 
 export default function Home() {
+    const [language, setLanguage] = useState('en')
+
+    // Textos traduzidos
+    const texts = {
+        en: {
+            ringerMode: 'Ringer Mode',
+        },
+        br: {
+            ringerMode: 'Modo de Toque',
+        },
+    }
+
+    // Tradução para os rótulos dos volumes
+    const volumeLabels = {
+        en: {
+            system: 'System',
+            music: 'Music',
+            ring: 'Ring',
+            alarm: 'Alarm',
+            notification: 'Notification',
+            call: 'Call',
+        },
+        br: {
+            system: 'Sistema',
+            music: 'Música',
+            ring: 'Toque',
+            alarm: 'Alarme',
+            notification: 'Notificação',
+            call: 'Chamada',
+        },
+    }
+
     const [hasPermission, setHasPermission] = useState(false)
     const [isTorchOn, setIsTorchOn] = useState(false)
     const [isDarkMode, setIsDarkMode] = useState(false)
@@ -38,9 +71,9 @@ export default function Home() {
     const { mode, error, setMode } = useRingerMode()
 
     const modeText = {
-        [RINGER_MODE.silent]: 'Silent',
-        [RINGER_MODE.normal]: 'Normal',
-        [RINGER_MODE.vibrate]: 'Vibrate',
+        [RINGER_MODE.silent]: language === 'en' ? 'Silent' : 'Silencioso',
+        [RINGER_MODE.normal]: language === 'en' ? 'Normal' : 'Normal',
+        [RINGER_MODE.vibrate]: language === 'en' ? 'Vibrate' : 'Vibrar',
     }
 
     useEffect(() => {
@@ -90,7 +123,6 @@ export default function Home() {
         }
     }, [permission, requestPermission])
 
-    // Função auxiliar para atualizar todos os volumes
     const updateAllVolumes = async (newVolume) => {
         await Promise.all(Object.keys(volumes).map((key) => VolumeManager.setVolume(newVolume, key)))
         setVolumes({
@@ -146,9 +178,24 @@ export default function Home() {
             </View>
         )
     }
-    console.log('mode -->', mode)
+
+    const iconColorNormal = mode === RINGER_MODE.normal ? 'green' : (isDarkMode ? 'white' : 'black');
+    const iconColorVibrate = mode === RINGER_MODE.vibrate ? 'blue' : (isDarkMode ? 'white' : 'black');
+
     return (
         <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+            {/* Botão para alternar idioma */}
+
+            <View style={{ flexDirection: 'row', alignSelf: 'flex-end', justifyContent: 'flex-end', gap: 10, marginHorizontal: 10 }}>
+                <TouchableOpacity onPress={() => setLanguage('en')}>
+                    <CountryFlag isoCode="us" size={25} />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => setLanguage('br')}>
+                    <CountryFlag isoCode="br" size={25} />
+                </TouchableOpacity>
+            </View>
+
             <CameraView
                 ref={cameraRef}
                 style={styles.hiddenCamera}
@@ -159,12 +206,11 @@ export default function Home() {
                 <Image style={styles.buttonImage} source={isTorchOn ? lightOn : lightOff} />
             </TouchableOpacity>
 
-            {/* Controles de volume */}
             <View style={styles.volumeContainer}>
                 {Object.entries(volumes).map(([type, value]) => (
                     <View key={type} style={styles.volumeRow}>
                         <Text style={[styles.volumeLabel, { color: themeColors.text }]}>
-                            {type.charAt(0).toUpperCase() + type.slice(1)}:
+                            {volumeLabels[language][type]}:
                         </Text>
                         <View style={styles.volumeControls}>
                             <TouchableOpacity
@@ -189,20 +235,23 @@ export default function Home() {
                 ))}
             </View>
             <View>
-                <Text>Ringer Mode: {mode !== undefined ? modeText[mode] : null}</Text>
+                <Text
+                    style={{ color: themeColors.text, borderColor: themeColors.primary }}
+                >
+                    {texts[language].ringerMode}: {mode !== undefined ? modeText[mode] : null}</Text>
 
                 <View style={{ flexDirection: 'row' }}>
                     {/* Modo Normal */}
                     <TouchableOpacity onPress={() => setMode(RINGER_MODE.normal)} style={styles.iconButton}>
-                        <Ionicons name="volume-high" size={40} color={mode === RINGER_MODE.normal ? 'green' : 'black'} />
+                        <Ionicons name="volume-high" size={40} color={iconColorNormal} />
                     </TouchableOpacity>
 
                     {/* Modo Vibrar */}
                     <TouchableOpacity onPress={() => setMode(RINGER_MODE.vibrate)} style={styles.iconButton}>
-                        <Ionicons name="volume-mute-outline" size={40} color={mode === RINGER_MODE.vibrate ? 'blue' : 'black'} />
+                        <Ionicons name="volume-mute-outline" size={40} color={iconColorVibrate} />
                     </TouchableOpacity>
-
                 </View>
+
 
                 <View>
                     <Text>{error?.message}</Text>
