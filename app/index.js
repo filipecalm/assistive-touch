@@ -11,7 +11,7 @@ export default function Home() {
     const [hasPermission, setHasPermission] = useState(false)
     const [isTorchOn, setIsTorchOn] = useState(false)
     const [isDarkMode, setIsDarkMode] = useState(false)
-    const [volume, setVolume] = useState(0.5)
+    const [volume, setVolume] = useState(0.5) // Valor padrão inicial
     const cameraRef = useRef(null)
     const [permission, requestPermission] = useCameraPermissions()
 
@@ -30,8 +30,19 @@ export default function Home() {
         }
 
         (async () => {
-            const currentVolume = await VolumeManager.getVolume()
-            setVolume(currentVolume)
+            try {
+                const currentVolume = await VolumeManager.getVolume()
+                // Verifica se o valor é um número válido entre 0 e 1
+                if (typeof currentVolume === 'number' && !isNaN(currentVolume) && currentVolume >= 0 && currentVolume <= 1) {
+                    setVolume(currentVolume)
+                } else {
+                    console.warn('Volume retornado inválido, usando valor padrão 0.5:', currentVolume)
+                    setVolume(0.5) // Define valor padrão se inválido
+                }
+            } catch (error) {
+                console.error('Erro ao obter volume:', error)
+                setVolume(0.5) // Valor padrão em caso de erro
+            }
         })()
     }, [permission, requestPermission])
 
@@ -91,7 +102,7 @@ export default function Home() {
                 <Text
                     style={[styles.volumeDisplay, { color: themeColors.text, borderColor: themeColors.primary }]}
                 >
-                    Volume: {(volume * 100).toFixed(0)}%
+                    Volume: {isNaN(volume) ? '0' : (volume * 100).toFixed(0)}%
                 </Text>
                 <TouchableOpacity
                     style={[styles.volumeButton, { backgroundColor: themeColors.primary }]}
