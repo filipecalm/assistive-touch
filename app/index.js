@@ -18,11 +18,25 @@ import lightOff from '../assets/images/eco-light-off.png'
 import lightOn from '../assets/images/eco-light.png'
 import { Feather, Ionicons } from '@expo/vector-icons'
 import CountryFlag from "react-native-country-flag"
+import { Appearance } from 'react-native'
 
 export default function Home() {
     const [language, setLanguage] = useState('en')
+    const [hasPermission, setHasPermission] = useState(false)
+    const [isTorchOn, setIsTorchOn] = useState(false)
+    const [isDarkMode, setIsDarkMode] = useState(false)
+    const [volumes, setVolumes] = useState({
+        system: 0.5,
+        music: 0.5,
+        ring: 0.5,
+        alarm: 0.5,
+        notification: 0.5,
+        call: 0.5,
+    })
+    const cameraRef = useRef(null)
+    const [permission, requestPermission] = useCameraPermissions()
 
-    // Textos traduzidos
+
     const texts = {
         en: {
             ringerMode: 'Ringer Mode',
@@ -32,7 +46,6 @@ export default function Home() {
         },
     }
 
-    // Tradução para os rótulos dos volumes
     const volumeLabels = {
         en: {
             system: 'System',
@@ -51,20 +64,6 @@ export default function Home() {
             call: 'Chamada',
         },
     }
-
-    const [hasPermission, setHasPermission] = useState(false)
-    const [isTorchOn, setIsTorchOn] = useState(false)
-    const [isDarkMode, setIsDarkMode] = useState(false)
-    const [volumes, setVolumes] = useState({
-        system: 0.5,
-        music: 0.5,
-        ring: 0.5,
-        alarm: 0.5,
-        notification: 0.5,
-        call: 0.5,
-    })
-    const cameraRef = useRef(null)
-    const [permission, requestPermission] = useCameraPermissions()
 
     const themeColors = isDarkMode ? darkColors : lightColors
 
@@ -161,6 +160,8 @@ export default function Home() {
         if (cameraRef.current) {
             setIsTorchOn(prev => !prev)
             setIsDarkMode(prev => !prev)
+            const newScheme = isDarkMode ? 'light' : 'dark'
+            Appearance.setColorScheme(newScheme)
         }
     }
 

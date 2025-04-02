@@ -3,12 +3,15 @@ import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
+import { useColorScheme } from 'react-native'
 import 'react-native-reanimated'
 
 export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   })
+
+  const colorScheme = useColorScheme()
 
   useEffect(() => {
     if (loaded) {
@@ -19,14 +22,14 @@ export default function RootLayout() {
   if (!loaded) {
     return null
   }
-
+  console.log('colorScheme -->', colorScheme)
   return (
     <>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </>
   )
 }
