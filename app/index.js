@@ -23,11 +23,11 @@ export default function Home() {
     const [isTorchOn, setIsTorchOn] = useState(false)
     const [isDarkMode, setIsDarkMode] = useState(false)
     const [volumes, setVolumes] = useState({
+        system: 0.5,
         music: 0.5,
         ring: 0.5,
         alarm: 0.5,
         notification: 0.5,
-        system: 0.5,
         call: 0.5,
     })
     const cameraRef = useRef(null)
@@ -59,11 +59,11 @@ export default function Home() {
                 const volumeData = await VolumeManager.getVolume()
                 setVolumes(prev => ({
                     ...prev,
+                    system: volumeData.system ?? prev.system,
                     music: volumeData.volume ?? prev.music,
                     ring: volumeData.ring ?? prev.ring,
                     alarm: volumeData.alarm ?? prev.alarm,
                     notification: volumeData.notification ?? prev.notification,
-                    system: volumeData.system ?? prev.system,
                     call: prev.call,
                 }))
             } catch (error) {
@@ -74,11 +74,11 @@ export default function Home() {
         const volumeListener = VolumeManager.addVolumeListener((result) => {
             setVolumes(prev => ({
                 ...prev,
+                system: result.system ?? prev.system,
                 music: result.volume ?? prev.music,
                 ring: result.ring ?? prev.ring,
                 alarm: result.alarm ?? prev.alarm,
                 notification: result.notification ?? prev.notification,
-                system: result.system ?? prev.system,
                 call: prev.call,
             }))
         })
@@ -94,11 +94,11 @@ export default function Home() {
     const updateAllVolumes = async (newVolume) => {
         await Promise.all(Object.keys(volumes).map((key) => VolumeManager.setVolume(newVolume, key)))
         setVolumes({
+            system: newVolume,
             music: newVolume,
             ring: newVolume,
             alarm: newVolume,
             notification: newVolume,
-            system: newVolume,
             call: newVolume,
         })
     }
