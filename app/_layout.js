@@ -23,7 +23,7 @@ export default function RootLayout() {
   return (
     <>
       <Stack>
-        <Stack.Screen name="home/index" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

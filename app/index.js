@@ -1,28 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { Audio } from 'expo-av'; // Importando expo-av
-import lightOff from '../../assets/images/eco-light-off.png';
-import lightOn from '../../assets/images/eco-light.png';
-import { colors } from '../../constants/colors';
+import React, { useState, useEffect, useRef } from 'react'
+import { View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native'
+import { CameraView, useCameraPermissions } from 'expo-camera'
+import { Audio } from 'expo-av' // Importando expo-av
+import lightOff from '../assets/images/eco-light-off.png'
+import lightOn from '../assets/images/eco-light.png'
+import { colors } from '../constants/colors'
+import { Feather } from '@expo/vector-icons'
 
 export default function Home() {
-    const [hasPermission, setHasPermission] = useState(false);
-    const [isTorchOn, setIsTorchOn] = useState(false);
-    const [volume, setVolume] = useState(0.5); // Volume inicial (0.0 a 1.0)
-    const [sound, setSound] = useState(null); // Estado para o objeto de som
-    const cameraRef = useRef(null);
-    const [permission, requestPermission] = useCameraPermissions();
+    const [hasPermission, setHasPermission] = useState(false)
+    const [isTorchOn, setIsTorchOn] = useState(false)
+    const [volume, setVolume] = useState(0.5)
+    const [sound, setSound] = useState(null)
+    const cameraRef = useRef(null)
+    const [permission, requestPermission] = useCameraPermissions()
 
     useEffect(() => {
-        if (!permission) return;
+        if (!permission) return
 
-        setHasPermission(permission.granted);
+        setHasPermission(permission.granted)
         if (!permission.granted) {
             (async () => {
-                const newPermission = await requestPermission();
-                setHasPermission(newPermission.granted);
-            })();
+                const newPermission = await requestPermission()
+                setHasPermission(newPermission.granted)
+            })()
         }
 
         // Configurar o modo de áudio e carregar um som de exemplo
@@ -30,55 +31,55 @@ export default function Home() {
             await Audio.setAudioModeAsync({
                 staysActiveInBackground: true,
                 playThroughEarpieceAndroid: false,
-            });
+            })
 
             // Carregar um som de exemplo (pode ser um arquivo local ou URL)
             const { sound: soundObject } = await Audio.Sound.createAsync(
                 { uri: 'http://soundbible.com/mp3/Air Plane Ding-SoundBible.com-496729130.mp3' }, // Som de exemplo
                 { shouldPlay: false } // Não toca automaticamente
-            );
-            setSound(soundObject);
-            await soundObject.setVolumeAsync(volume); // Define o volume inicial
-        })();
+            )
+            setSound(soundObject)
+            await soundObject.setVolumeAsync(volume) // Define o volume inicial
+        })()
 
         // Limpeza ao desmontar o componente
         return () => {
             if (sound) {
-                sound.unloadAsync();
+                sound.unloadAsync()
             }
-        };
-    }, [permission, requestPermission]);
+        }
+    }, [permission, requestPermission])
 
     const toggleTorch = () => {
         if (cameraRef.current) {
-            setIsTorchOn(prev => !prev);
+            setIsTorchOn(prev => !prev)
         }
-    };
+    }
 
     // Função para aumentar o volume
     const increaseVolume = async () => {
-        const newVolume = Math.min(volume + 0.1, 1.0); // Aumenta em 10%, máximo 1.0
+        const newVolume = Math.min(volume + 0.1, 1.0) // Aumenta em 10%, máximo 1.0
         if (sound) {
-            await sound.setVolumeAsync(newVolume);
-            setVolume(newVolume);
+            await sound.setVolumeAsync(newVolume)
+            setVolume(newVolume)
             // Toca o som brevemente para demonstrar o volume
-            await sound.replayAsync();
+            await sound.replayAsync()
         }
-    };
+    }
 
     // Função para diminuir o volume
     const decreaseVolume = async () => {
-        const newVolume = Math.max(volume - 0.1, 0.0); // Diminui em 10%, mínimo 0.0
+        const newVolume = Math.max(volume - 0.1, 0.0) // Diminui em 10%, mínimo 0.0
         if (sound) {
-            await sound.setVolumeAsync(newVolume);
-            setVolume(newVolume);
+            await sound.setVolumeAsync(newVolume)
+            setVolume(newVolume)
             // Toca o som brevemente para demonstrar o volume
-            await sound.replayAsync();
+            await sound.replayAsync()
         }
-    };
+    }
 
     if (hasPermission === null) {
-        return <View />;
+        return <View />
     }
 
     if (hasPermission === false) {
@@ -89,7 +90,7 @@ export default function Home() {
                     <Text>Solicitar permissão</Text>
                 </TouchableOpacity>
             </View>
-        );
+        )
     }
 
     return (
@@ -107,16 +108,16 @@ export default function Home() {
 
             {/* Botões de volume */}
             <View style={styles.volumeControls}>
-                <TouchableOpacity style={styles.volumeButton} onPress={increaseVolume}>
-                    <Text style={styles.volumeText}>+ Volume</Text>
-                </TouchableOpacity>
                 <TouchableOpacity style={styles.volumeButton} onPress={decreaseVolume}>
-                    <Text style={styles.volumeText}>- Volume</Text>
+                    <Feather name='minus-circle' size={22} color={colors.white} />
                 </TouchableOpacity>
                 <Text style={styles.volumeDisplay}>Volume: {(volume * 100).toFixed(0)}%</Text>
+                <TouchableOpacity style={styles.volumeButton} onPress={increaseVolume}>
+                    <Feather name='plus-circle' size={22} color={colors.white} />
+                </TouchableOpacity>
             </View>
         </View>
-    );
+    )
 }
 
 const styles = StyleSheet.create({
@@ -138,21 +139,27 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
     },
     volumeControls: {
+        flexDirection: 'row',
         marginTop: 20,
         alignItems: 'center',
     },
     volumeButton: {
-        backgroundColor: colors.gray,
-        padding: 10,
+        backgroundColor: colors.steel_blue,
+        padding: 14,
         borderRadius: 5,
-        marginVertical: 5,
+        marginVertical: 5
     },
     volumeText: {
         color: colors.white,
-        fontSize: 16,
+        fontSize: 20,
     },
     volumeDisplay: {
-        marginTop: 10,
+        height: 50,
         fontSize: 16,
-    },
-});
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: colors.steel_blue,
+        paddingHorizontal: 10,
+        textAlignVertical: 'center'
+    }
+})
