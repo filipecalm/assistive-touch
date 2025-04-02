@@ -1,0 +1,18 @@
+export const colors = {
+  azure: '#007BFF',
+  black: '#000',
+  blue: '#2196F3',
+  bright_red: '#DC3545',
+  dark_blue: '#004C8B',
+  dark_gray: '#A9A9A9',
+  gray300: '#D1D5DB',
+  green: '#25D366',
+  light_pink: '#FFD6D6',
+  lime: '#00FF00',
+  opacity: 'rgba(0,0,0,0.5)',
+  opaque: 'rgba(0,0,0,0.7)',
+  orange: '#FFA600',
+  red: '#FF0000',
+  steel_blue: '#396A9F',
+  white: "#FFF",
+}
