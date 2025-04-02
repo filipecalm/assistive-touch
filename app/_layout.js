@@ -22,7 +22,7 @@ export default function RootLayout() {
   if (!loaded) {
     return null
   }
-  console.log('colorScheme -->', colorScheme)
+
   return (
     <>
       <Stack>

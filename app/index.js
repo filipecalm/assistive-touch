@@ -165,14 +165,20 @@ export default function Home() {
         }
     }
 
+    const toggleSwitch = () => {
+        const newScheme = isDarkMode ? 'light' : 'dark'
+        Appearance.setColorScheme(newScheme)
+        setIsDarkMode(!isDarkMode)
+    }
+
     if (hasPermission === null) {
         return <View />
     }
 
     if (hasPermission === false) {
         return (
-            <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-                <Text style={{ color: themeColors.text }}>Permissão negada</Text>
+            <View style={[styles.container, styles.itemsCenter, { backgroundColor: themeColors.background }]}>
+                <Text style={{ fontSize: 22, color: themeColors.text }}>Permissão negada</Text>
                 <TouchableOpacity onPress={requestPermission}>
                     <Text style={{ color: themeColors.primary }}>Solicitar permissão</Text>
                 </TouchableOpacity>
@@ -180,32 +186,44 @@ export default function Home() {
         )
     }
 
-    const iconColorNormal = mode === RINGER_MODE.normal ? 'green' : (isDarkMode ? 'white' : 'black');
-    const iconColorVibrate = mode === RINGER_MODE.vibrate ? 'blue' : (isDarkMode ? 'white' : 'black');
+    const iconColorNormal = mode === RINGER_MODE.normal ? 'green' : (isDarkMode ? 'white' : 'black')
+    const iconColorVibrate = mode === RINGER_MODE.vibrate ? 'blue' : (isDarkMode ? 'white' : 'black')
 
     return (
         <View style={[styles.container, { backgroundColor: themeColors.background }]}>
             {/* Botão para alternar idioma */}
 
-            <View style={{ flexDirection: 'row', alignSelf: 'flex-end', justifyContent: 'flex-end', gap: 10, marginHorizontal: 10 }}>
-                <TouchableOpacity onPress={() => setLanguage('en')}>
-                    <CountryFlag isoCode="us" size={25} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 10 }}>
+
+                {/* Ícone de sol no canto esquerdo */}
+                <TouchableOpacity onPress={toggleSwitch}>
+                    <Feather name="sun" size={25} color={isDarkMode ? 'white' : 'black'} />
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => setLanguage('br')}>
-                    <CountryFlag isoCode="br" size={25} />
-                </TouchableOpacity>
+                {/* Bandeiras no canto direito */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <TouchableOpacity onPress={() => setLanguage('en')}>
+                        <CountryFlag isoCode="us" size={25} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => setLanguage('br')}>
+                        <CountryFlag isoCode="br" size={25} />
+                    </TouchableOpacity>
+                </View>
+
             </View>
 
-            <CameraView
-                ref={cameraRef}
-                style={styles.hiddenCamera}
-                enableTorch={isTorchOn}
-                facing="back"
-            />
-            <TouchableOpacity onPress={toggleTorch}>
-                <Image style={styles.buttonImage} source={isTorchOn ? lightOn : lightOff} />
-            </TouchableOpacity>
+            <View style={styles.itemsCenter}>
+                <CameraView
+                    ref={cameraRef}
+                    style={styles.hiddenCamera}
+                    enableTorch={isTorchOn}
+                    facing="back"
+                />
+                <TouchableOpacity onPress={toggleTorch} style={styles.buttonImage}>
+                    <Image style={styles.buttonImage} source={isTorchOn ? lightOn : lightOff} />
+                </TouchableOpacity>
+            </View>
 
             <View style={styles.volumeContainer}>
                 {Object.entries(volumes).map(([type, value]) => (
@@ -235,7 +253,7 @@ export default function Home() {
                     </View>
                 ))}
             </View>
-            <View>
+            <View style={styles.itemsCenter}>
                 <Text
                     style={{ color: themeColors.text, borderColor: themeColors.primary }}
                 >
@@ -254,7 +272,7 @@ export default function Home() {
                 </View>
 
 
-                <View>
+                <View style={styles.itemsCenter}>
                     <Text>{error?.message}</Text>
                 </View>
             </View>
@@ -265,8 +283,12 @@ export default function Home() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        paddingVertical: '15%'
+    },
+    itemsCenter: {
         justifyContent: 'center',
         alignItems: 'center',
+        paddingVertical: 10,
     },
     hiddenCamera: {
         position: 'absolute',
