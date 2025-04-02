@@ -1,19 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
-import { Audio } from 'expo-av' // Importando expo-av
+import { VolumeManager } from 'react-native-volume-manager'
 import lightOff from '../assets/images/eco-light-off.png'
 import lightOn from '../assets/images/eco-light.png'
-import { colors } from '../constants/colors'
+import { lightColors, darkColors } from '../constants/colors'
 import { Feather } from '@expo/vector-icons'
 
 export default function Home() {
     const [hasPermission, setHasPermission] = useState(false)
     const [isTorchOn, setIsTorchOn] = useState(false)
+    const [isDarkMode, setIsDarkMode] = useState(false)
     const [volume, setVolume] = useState(0.5)
-    const [sound, setSound] = useState(null)
     const cameraRef = useRef(null)
     const [permission, requestPermission] = useCameraPermissions()
+
+    // Selecionar as cores com base no modo
+    const themeColors = isDarkMode ? darkColors : lightColors
 
     useEffect(() => {
         if (!permission) return
@@ -26,56 +29,29 @@ export default function Home() {
             })()
         }
 
-        // Configurar o modo de áudio e carregar um som de exemplo
         (async () => {
-            await Audio.setAudioModeAsync({
-                staysActiveInBackground: true,
-                playThroughEarpieceAndroid: false,
-            })
-
-            // Carregar um som de exemplo (pode ser um arquivo local ou URL)
-            const { sound: soundObject } = await Audio.Sound.createAsync(
-                { uri: 'http://soundbible.com/mp3/Air Plane Ding-SoundBible.com-496729130.mp3' }, // Som de exemplo
-                { shouldPlay: false } // Não toca automaticamente
-            )
-            setSound(soundObject)
-            await soundObject.setVolumeAsync(volume) // Define o volume inicial
+            const currentVolume = await VolumeManager.getVolume()
+            setVolume(currentVolume)
         })()
-
-        // Limpeza ao desmontar o componente
-        return () => {
-            if (sound) {
-                sound.unloadAsync()
-            }
-        }
     }, [permission, requestPermission])
 
     const toggleTorch = () => {
         if (cameraRef.current) {
-            setIsTorchOn(prev => !prev)
+            setIsTorchOn(prev => !prev)    // Alterna a lanterna
+            setIsDarkMode(prev => !prev)   // Alterna o modo claro/escuro
         }
     }
 
-    // Função para aumentar o volume
     const increaseVolume = async () => {
-        const newVolume = Math.min(volume + 0.1, 1.0) // Aumenta em 10%, máximo 1.0
-        if (sound) {
-            await sound.setVolumeAsync(newVolume)
-            setVolume(newVolume)
-            // Toca o som brevemente para demonstrar o volume
-            await sound.replayAsync()
-        }
+        const newVolume = Math.min(volume + 0.1, 1.0)
+        await VolumeManager.setVolume(newVolume)
+        setVolume(newVolume)
     }
 
-    // Função para diminuir o volume
     const decreaseVolume = async () => {
-        const newVolume = Math.max(volume - 0.1, 0.0) // Diminui em 10%, mínimo 0.0
-        if (sound) {
-            await sound.setVolumeAsync(newVolume)
-            setVolume(newVolume)
-            // Toca o som brevemente para demonstrar o volume
-            await sound.replayAsync()
-        }
+        const newVolume = Math.max(volume - 0.1, 0.0)
+        await VolumeManager.setVolume(newVolume)
+        setVolume(newVolume)
     }
 
     if (hasPermission === null) {
@@ -84,18 +60,17 @@ export default function Home() {
 
     if (hasPermission === false) {
         return (
-            <View style={styles.container}>
-                <Text>Permissão negada</Text>
+            <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+                <Text style={{ color: themeColors.text }}>Permissão negada</Text>
                 <TouchableOpacity onPress={requestPermission}>
-                    <Text>Solicitar permissão</Text>
+                    <Text style={{ color: themeColors.primary }}>Solicitar permissão</Text>
                 </TouchableOpacity>
             </View>
         )
     }
 
     return (
-        <View style={styles.container}>
-            {/* Câmera invisível, apenas para controle da lanterna */}
+        <View style={[styles.container, { backgroundColor: themeColors.background }]}>
             <CameraView
                 ref={cameraRef}
                 style={styles.hiddenCamera}
@@ -106,14 +81,23 @@ export default function Home() {
                 <Image style={styles.buttonImage} source={isTorchOn ? lightOn : lightOff} />
             </TouchableOpacity>
 
-            {/* Botões de volume */}
             <View style={styles.volumeControls}>
-                <TouchableOpacity style={styles.volumeButton} onPress={decreaseVolume}>
-                    <Feather name='minus-circle' size={22} color={colors.white} />
+                <TouchableOpacity
+                    style={[styles.volumeButton, { backgroundColor: themeColors.primary }]}
+                    onPress={decreaseVolume}
+                >
+                    <Feather name="minus-circle" size={22} color={themeColors.text} />
                 </TouchableOpacity>
-                <Text style={styles.volumeDisplay}>Volume: {(volume * 100).toFixed(0)}%</Text>
-                <TouchableOpacity style={styles.volumeButton} onPress={increaseVolume}>
-                    <Feather name='plus-circle' size={22} color={colors.white} />
+                <Text
+                    style={[styles.volumeDisplay, { color: themeColors.text, borderColor: themeColors.primary }]}
+                >
+                    Volume: {(volume * 100).toFixed(0)}%
+                </Text>
+                <TouchableOpacity
+                    style={[styles.volumeButton, { backgroundColor: themeColors.primary }]}
+                    onPress={increaseVolume}
+                >
+                    <Feather name="plus-circle" size={22} color={themeColors.text} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -125,7 +109,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: colors.white,
     },
     hiddenCamera: {
         position: 'absolute',
@@ -144,22 +127,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     volumeButton: {
-        backgroundColor: colors.steel_blue,
         padding: 14,
         borderRadius: 5,
-        marginVertical: 5
-    },
-    volumeText: {
-        color: colors.white,
-        fontSize: 20,
+        marginVertical: 5,
     },
     volumeDisplay: {
         height: 50,
         fontSize: 16,
         borderTopWidth: 1,
         borderBottomWidth: 1,
-        borderColor: colors.steel_blue,
         paddingHorizontal: 10,
-        textAlignVertical: 'center'
-    }
+        textAlignVertical: 'center',
+    },
 })
