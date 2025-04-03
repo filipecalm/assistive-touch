@@ -16,7 +16,9 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["ACCESS_NOTIFICATION_POLICY"],
+      "permissions": [
+        "ACCESS_NOTIFICATION_POLICY"
+      ],
       "package": "com.filipecalm.assistivetouch"
     },
     "web": {
@@ -53,6 +55,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "40d4f068-e0cf-4b17-a5c4-8ad87a290cca"
+      }
     }
   }
 }
