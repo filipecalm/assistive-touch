@@ -3,7 +3,6 @@ import {
     View,
     Text,
     Image,
-    Button,
     StyleSheet,
     TouchableOpacity,
 } from 'react-native'
@@ -17,6 +16,7 @@ import {
 import lightOff from '../assets/images/eco-light-off.png'
 import lightOn from '../assets/images/eco-light.png'
 import { Feather, Ionicons } from '@expo/vector-icons'
+import Slider from '@react-native-community/slider'
 import CountryFlag from "react-native-country-flag"
 import { Appearance } from 'react-native'
 
@@ -134,6 +134,17 @@ export default function Home() {
         })
     }
 
+    useEffect(() => {
+        const subscription = VolumeManager.addVolumeListener(({ volume, category }) => {
+            setVolumes((prev) => ({ ...prev, [category]: volume }))
+        })
+
+        return () => {
+            subscription.remove()
+        }
+    }, [])
+
+
     const increaseVolume = async (type) => {
         if (type === 'system') {
             const newVolume = Math.min(volumes.system + 0.1, 1.0)
@@ -226,32 +237,56 @@ export default function Home() {
             </View>
 
             <View style={styles.volumeContainer}>
-                {Object.entries(volumes).map(([type, value]) => (
-                    <View key={type} style={styles.volumeRow}>
-                        <Text style={[styles.volumeLabel, { color: themeColors.text }]}>
-                            {volumeLabels[language][type]}:
-                        </Text>
-                        <View style={styles.volumeControls}>
-                            <TouchableOpacity
-                                style={[styles.volumeButton, { backgroundColor: themeColors.primary }]}
-                                onPress={() => decreaseVolume(type)}
-                            >
-                                <Feather name="minus-circle" size={22} color={themeColors.text} />
-                            </TouchableOpacity>
-                            <Text
-                                style={[styles.volumeDisplay, { color: themeColors.text, borderColor: themeColors.primary }]}
-                            >
-                                {(value * 100).toFixed(0)}%
+                {Object.entries(volumes)
+                    .filter(([key]) => key !== "undefined")
+                    .map(([type, value]) => (
+                        <View key={type} style={styles.volumeRow}>
+                            <Text style={[styles.volumeLabel, { color: themeColors.text }]}>
+                                {volumeLabels[language][type]}:
                             </Text>
-                            <TouchableOpacity
-                                style={[styles.volumeButton, { backgroundColor: themeColors.primary }]}
-                                onPress={() => increaseVolume(type)}
-                            >
-                                <Feather name="plus-circle" size={22} color={themeColors.text} />
-                            </TouchableOpacity>
+                            <View style={styles.volumeControls}>
+                                <View style={styles.sliderContainer}>
+                                    <Text style={[styles.volumeLabel, { color: themeColors.text }]}>
+                                        {(value * 100).toFixed(0)}%
+                                    </Text>
+
+                                    <Slider
+                                        style={styles.volumeSlider}
+                                        minimumValue={0}
+                                        maximumValue={1}
+                                        step={0.01}
+                                        value={Number(volumes[type]) || 0}
+                                        onSlidingComplete={async (newValue) => {
+                                            if (type === "system") {
+                                                // Se o usuário mexer no slider de "system", atualiza todos os volumes
+                                                await Promise.all(
+                                                    Object.keys(volumes).map((key) =>
+                                                        VolumeManager.setVolume(newValue, key)
+                                                    )
+                                                )
+                                                setVolumes({
+                                                    system: newValue,
+                                                    music: newValue,
+                                                    ring: newValue,
+                                                    alarm: newValue,
+                                                    notification: newValue,
+                                                    call: newValue,
+                                                })
+                                            } else {
+                                                // Se mexer em qualquer outro slider, só atualiza aquele volume específico
+                                                await VolumeManager.setVolume(newValue, type)
+                                                setVolumes((prev) => ({ ...prev, [type]: newValue }))
+                                            }
+                                        }}
+                                        minimumTrackTintColor={themeColors.primary}
+                                        maximumTrackTintColor="#ccc"
+                                        thumbTintColor={themeColors.secondary}
+                                    />
+
+                                </View>
+                            </View>
                         </View>
-                    </View>
-                ))}
+                    ))}
             </View>
             <View style={styles.itemsCenter}>
                 <Text
@@ -339,5 +374,18 @@ const styles = StyleSheet.create({
     },
     iconButton: {
         padding: 10,
+    },
+    sliderContainer: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 10,
+    },
+    volumeLabel: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    volumeSlider: {
+        flex: 1,
+        height: 40,
     },
 })
