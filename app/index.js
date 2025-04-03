@@ -209,7 +209,7 @@ export default function Home() {
         <View style={[styles.container, { backgroundColor: themeColors.background }]}>
             {/* Botão para alternar idioma */}
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 10 }}>
+            <View style={styles.header}>
 
                 {/* Ícone de sol no canto esquerdo */}
                 <TouchableOpacity onPress={toggleSwitch}>
@@ -319,7 +319,7 @@ export default function Home() {
                     Copyright ©Filipe Almeida
                 </Text>
             </View>
-            <View style={[styles.banner, { backgroundColor: isDarkMode ? 'white' : 'black', position: 'absolute', bottom: '4%', width: '99.5%' }]}>
+            <View style={[styles.banner, { backgroundColor: isDarkMode ? 'black' : 'white', position: 'absolute', bottom: '4%', width: '99.5%' }]}>
                 <BannerAd
                     unitId={adFooterBannerUnitId}
                     size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
@@ -333,6 +333,13 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingVertical: '15%'
+    },
+    header: {
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginHorizontal: 10, 
+        marginBottom: 20 
     },
     itemsCenter: {
         justifyContent: 'center',
