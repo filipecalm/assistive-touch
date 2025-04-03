@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "assistive-touch",
-    "slug": "Aumentar Volume",
+    "name": "Aumentar Volume",
+    "slug": "assistive-touch",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -33,6 +33,21 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-8494529652341097~3507439087",
+          "iosAppId": "ca-app-pub-8494529652341097~3507439087"
         }
       ]
     ],

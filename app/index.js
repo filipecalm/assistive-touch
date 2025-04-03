@@ -19,6 +19,9 @@ import { Feather, Ionicons } from '@expo/vector-icons'
 import Slider from '@react-native-community/slider'
 import CountryFlag from "react-native-country-flag"
 import { Appearance } from 'react-native'
+import {
+    TestIds, BannerAd, BannerAdSize
+} from 'react-native-google-mobile-ads'
 
 export default function Home() {
     const [language, setLanguage] = useState('en')
@@ -36,6 +39,8 @@ export default function Home() {
     const cameraRef = useRef(null)
     const [permission, requestPermission] = useCameraPermissions()
 
+    const devmode = false
+    const adFooterBannerUnitId = devmode ? TestIds.ADAPTIVE_BANNER : "ca-app-pub-8494529652341097/9603612568"
 
     const texts = {
         en: {
@@ -310,6 +315,15 @@ export default function Home() {
                 <View style={styles.itemsCenter}>
                     <Text>{error?.message}</Text>
                 </View>
+                <Text style={[styles.footerText, { color: isDarkMode ? 'white' : 'black' }]}>
+                    Copyright ©Filipe Almeida
+                </Text>
+            </View>
+            <View style={[styles.banner, { backgroundColor: isDarkMode ? 'white' : 'black', position: 'absolute', bottom: '4%', width: '99.5%' }]}>
+                <BannerAd
+                    unitId={adFooterBannerUnitId}
+                    size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                />
             </View>
         </View>
     )
@@ -388,4 +402,17 @@ const styles = StyleSheet.create({
         flex: 1,
         height: 40,
     },
+    banner: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+        zIndex: 99
+    },
+    footerText: {
+        fontSize: 12,
+        fontStyle: 'italic',
+        fontWeight: 'bold',
+        position: 'absolute',
+        bottom: 10
+    }
 })
